@@ -1,24 +1,29 @@
 import streamlit as st
+import yfinance as yf # Precisa adicionar no requirements.txt
 
-st.title("🔒 SafeTrade Mobile")
-st.subheader("Painel de Saques Seguros")
+st.title("📈 Trader Pro - Algoritmo de Análise")
 
-# Lista de contas autorizadas
-contas_seguras = ["12345-6", "98765-4"]
+# Configuração do Ativo (ex: PETR4.SA ou BTC-USD)
+ticker_symbol = st.text_input("Digite o código do ativo (ex: BTC-USD):", "BTC-USD")
 
-# Campos de entrada
-valor = st.number_input("Valor do Saque (R$)", min_value=0.0, format="%.2f")
-destino = st.text_input("Conta de Destino:")
-
-# Botão de ação
-if st.button("Solicitar Saque"):
-    if valor > 5000.00:
-        st.error("ALERTA: Saque bloqueado. O limite máximo é R$ 5.000,00.")
-    elif destino not in contas_seguras:
-        st.error("ALERTA: Conta desconhecida. Saque bloqueado por segurança!")
-    elif valor > 0 and destino:
-        st.success("Saque autorizado com sucesso!")
-        st.balloons()
-    else:
-        st.warning("Por favor, preencha o valor e a conta.")
+if st.button("Analisar Mercado"):
+    try:
+        # Busca dados reais
+        dados = yf.Ticker(ticker_symbol)
+        preco = dados.history(period="1d")['Close'].iloc[-1]
         
+        st.metric(f"Preço Atual de {ticker_symbol}", f"R$ {preco:,.2f}")
+        
+        # Lógica de Competência (Média Móvel Simples)
+        hist = dados.history(period="5d")
+        media = hist['Close'].mean()
+        
+        if preco < media:
+            st.success("Sinal: COMPRA (Preço abaixo da média de 5 dias)")
+        else:
+            st.warning("Sinal: AGUARDAR (Preço acima da média. Risco de correção.)")
+            
+    except Exception as e:
+        st.error("Erro ao buscar dados. Verifique o código do ativo.")
+
+st.info("Algoritmo operando com base em Média Móvel de 5 períodos.")
