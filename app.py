@@ -1,29 +1,32 @@
 import streamlit as st
-import yfinance as yf # Precisa adicionar no requirements.txt
+import yfinance as yf
 
-st.title("📈 Trader Pro - Algoritmo de Análise")
+st.title("🛡️ Trader Pro - Com Gestão de Risco")
 
-# Configuração do Ativo (ex: PETR4.SA ou BTC-USD)
-ticker_symbol = st.text_input("Digite o código do ativo (ex: BTC-USD):", "BTC-USD")
+ticker = st.text_input("Ativo (ex: BTC-USD ou PETR4.SA):", "BTC-USD")
+capital_alocado = st.number_input("Capital para Operação (R$):", min_value=100.0, value=1000.0)
 
-if st.button("Analisar Mercado"):
+if st.button("Executar Análise"):
     try:
-        # Busca dados reais
-        dados = yf.Ticker(ticker_symbol)
-        preco = dados.history(period="1d")['Close'].iloc[-1]
+        dados = yf.Ticker(ticker)
+        preco_atual = dados.history(period="1d")['Close'].iloc[-1]
         
-        st.metric(f"Preço Atual de {ticker_symbol}", f"R$ {preco:,.2f}")
+        # Cálculo de Stop Loss (Margem de 5% de proteção)
+        stop_loss = preco_atual * 0.95
         
-        # Lógica de Competência (Média Móvel Simples)
+        st.metric(f"Preço {ticker}", f"R$ {preco_atual:,.2f}")
+        st.error(f"⚠️ Preço de Proteção (Stop Loss): R$ {stop_loss:,.2f}")
+        
+        # Lógica de decisão
         hist = dados.history(period="5d")
         media = hist['Close'].mean()
         
-        if preco < media:
-            st.success("Sinal: COMPRA (Preço abaixo da média de 5 dias)")
+        if preco_atual < media:
+            st.success("✅ SINAL: COMPRA")
+            st.write(f"Gerenciamento: Se comprar hoje, coloque seu Stop Loss em R$ {stop_loss:,.2f}")
         else:
-            st.warning("Sinal: AGUARDAR (Preço acima da média. Risco de correção.)")
+            st.warning("❌ SINAL: ESPERA (Risco alto)")
             
     except Exception as e:
-        st.error("Erro ao buscar dados. Verifique o código do ativo.")
-
-st.info("Algoritmo operando com base em Média Móvel de 5 períodos.")
+        st.error("Erro ao conectar com o mercado. Verifique o código.")
+        
