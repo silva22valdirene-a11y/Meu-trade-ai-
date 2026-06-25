@@ -1,48 +1,46 @@
 import streamlit as st
-import yfinance as yf
-import pandas as pd
+import ccxt
 
-st.set_page_config(page_title="Trader Pro", layout="wide")
+st.title("🛡️ Trader Pro | Execução Binance")
 
-st.title("📊 Trader Pro | Dashboard Executivo")
-
-with st.sidebar:
-    st.header("Configurações")
-    ticker = st.text_input("Ativo", "BTC-USD").upper()
-    capital = st.number_input("Capital (R$)", value=1000.0)
-    risco = st.slider("Margem de Risco (%)", 1, 10, 5)
-
-try:
-    dados = yf.Ticker(ticker)
-    hist = dados.history(period="1mo")
-    preco = hist['Close'].iloc[-1]
-    media = hist['Close'].rolling(window=5).mean().iloc[-1]
-    
-    col1, col2 = st.columns(2)
-    col1.metric("Preço Atual", f"R$ {preco:,.2f}")
-    col2.metric("Média 5d", f"R$ {media:,.2f}")
-    
-    st.markdown("### 📈 Análise de Tendência")
-    st.line_chart(hist['Close'])
-    
-    # Tabela de Estatísticas (O toque de mestre)
-    st.write("### 📊 Resumo Estatístico")
-    resumo = pd.DataFrame({
-        "Máxima (1 mês)": [hist['High'].max()],
-        "Mínima (1 mês)": [hist['Low'].min()],
-        "Volatilidade": [f"{((hist['Close'].std()/preco)*100):.2f}%"]
+# 1. Conexão com Binance (Dados vêm do Streamlit Secrets)
+def get_exchange():
+    return ccxt.binance({
+        'apiKey': st.secrets["BINANCE_API_KEY"],
+        'secret': st.secrets["BINANCE_API_SECRET"],
+        'enableRateLimit': True,
+        'options': {'defaultType': 'spot'}
     })
-    st.table(resumo)
-    
-    if preco < media:
-        st.success("✅ SINAL: COMPRA")
-    else:
-        st.warning("⚠️ SINAL: AGUARDAR")
-        
-    st.markdown("### 🛡️ Gestão de Risco")
-    stop_loss = preco * (1 - (risco/100))
-    st.info(f"**STOP LOSS:** R$ {stop_loss:,.2f}")
 
-except:
-    st.error("Erro ao carregar.")
-    
+# 2. Sidebar de Controle de Ordem
+with st.sidebar:
+    st.header("Operação Real")
+    ativo = st.text_input("Par de Negociação", "BTC/USDT").upper()
+    quantidade = st.number_input("Quantidade", value=0.001)
+
+# 3. Funções de Execução
+if st.button("🚀 COMPRAR A MERCADO"):
+    try:
+        exchange = get_exchange()
+        ordem = exchange.create_market_buy_order(ativo, quantidade)
+        st.success(f"Compra executada! ID: {ordem['id']}")
+    except Exception as e:
+        st.error(f"Erro na execução: {e}")
+
+if st.button("🛑 VENDER A MERCADO"):
+    try:
+        exchange = get_exchange()
+        ordem = exchange.create_market_sell_order(ativo, quantidade)
+        st.warning(f"Venda executada! ID: {ordem['id']}")
+    except Exception as e:
+        st.error(f"Erro na execução: {e}")
+
+# 4. Verificação de Saldo
+if st.button("Verificar Saldo"):
+    try:
+        exchange = get_exchange()
+        balanco = exchange.fetch_balance()
+        st.write(f"Saldo disponível (USDT): {balanco['total']['USDT']}")
+    except Exception as e:
+        st.error("Erro ao buscar saldo. Verifique suas chaves.")
+        
