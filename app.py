@@ -1,32 +1,41 @@
 import streamlit as st
 import yfinance as yf
 
-st.title("🛡️ Trader Pro - Com Gestão de Risco")
+# Configuração da página para ocupar a tela toda
+st.set_page_config(page_title="Trader Pro", layout="centered")
 
-ticker = st.text_input("Ativo (ex: BTC-USD ou PETR4.SA):", "BTC-USD")
-capital_alocado = st.number_input("Capital para Operação (R$):", min_value=100.0, value=1000.0)
+# Estilo usando colunas e containers
+st.title("📊 Trader Pro 3.0")
+st.markdown("---")
 
-if st.button("Executar Análise"):
+col1, col2 = st.columns(2)
+
+with col1:
+    ticker = st.text_input("Ativo", "BTC-USD").upper()
+
+with col2:
+    capital = st.number_input("Capital (R$)", min_value=100.0, value=1000.0)
+
+if st.button("🚀 Executar Análise de Alta Performance"):
     try:
         dados = yf.Ticker(ticker)
-        preco_atual = dados.history(period="1d")['Close'].iloc[-1]
+        preco = dados.history(period="1d")['Close'].iloc[-1]
+        media = dados.history(period="5d")['Close'].mean()
+        stop_loss = preco * 0.95
         
-        # Cálculo de Stop Loss (Margem de 5% de proteção)
-        stop_loss = preco_atual * 0.95
+        # Dashboard visual
+        st.metric(label=f"Cotação Atual de {ticker}", value=f"R$ {preco:,.2f}")
         
-        st.metric(f"Preço {ticker}", f"R$ {preco_atual:,.2f}")
-        st.error(f"⚠️ Preço de Proteção (Stop Loss): R$ {stop_loss:,.2f}")
-        
-        # Lógica de decisão
-        hist = dados.history(period="5d")
-        media = hist['Close'].mean()
-        
-        if preco_atual < media:
-            st.success("✅ SINAL: COMPRA")
-            st.write(f"Gerenciamento: Se comprar hoje, coloque seu Stop Loss em R$ {stop_loss:,.2f}")
+        # Área de alerta com design diferenciado
+        if preco < media:
+            st.success("SINAL DETECTADO: COMPRA")
         else:
-            st.warning("❌ SINAL: ESPERA (Risco alto)")
+            st.error("SINAL DETECTADO: AGUARDAR")
             
-    except Exception as e:
-        st.error("Erro ao conectar com o mercado. Verifique o código.")
+        # Tabela de Riscos
+        st.write("### Gerenciamento de Risco")
+        st.info(f"**Stop Loss Sugerido:** R$ {stop_loss:,.2f}")
+        
+    except Exception:
+        st.warning("Verifique o código do ativo.")
         
