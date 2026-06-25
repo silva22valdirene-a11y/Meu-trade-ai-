@@ -1,31 +1,36 @@
 import ccxt
 import time
 
-# Configuração da API
+# Use as suas chaves API (crie uma API Key na Binance com permissão de 'Spot Trading')
 exchange = ccxt.binance({
     'apiKey': 'SUA_API_KEY',
     'secret': 'SUA_SECRET_KEY',
     'enableRateLimit': True,
 })
 
-def robô_de_lucro():
+def executar_bot():
+    print("Robô iniciado...")
+    ticker = 'BTC/USDT'
+    
     while True:
         try:
-            # 1. Busca dados do mercado
-            ticker = 'BTC/USDT'
+            # Busca histórico de velas
             ohlcv = exchange.fetch_ohlcv(ticker, timeframe='1h', limit=20)
-            # ... (cálculo do RSI aqui)
+            close_prices = [candle[4] for candle in ohlcv]
             
-            # 2. Lógica de Compra
-            if rsi < 30:
-                print("Sinal detectado: COMPRANDO...")
-                exchange.create_market_buy_order(ticker, 0.001)
+            # Cálculo simples de média móvel para exemplo
+            sma = sum(close_prices[-5:]) / 5
+            preco_atual = close_prices[-1]
             
-            # 3. Pausa para não ser bloqueado pela Binance
-            time.sleep(60) 
+            # Estratégia: Se preço < média, compra
+            if preco_atual < sma:
+                print(f"Sinal de Compra: {preco_atual}")
+                # exchange.create_market_buy_order(ticker, 0.001)
+            
+            time.sleep(60) # Espera 1 minuto entre checagens
             
         except Exception as e:
             print(f"Erro: {e}")
-            time.sleep(10)
+            time.sleep(60)
 
-# robô_de_lucro()
+# Para rodar: basta executar este script
