@@ -1,6 +1,5 @@
 streamlit
 yfinance
-ccxt
 pandas
 plotly
-
+ccxt
