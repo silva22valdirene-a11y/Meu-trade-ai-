@@ -10,25 +10,30 @@ with st.sidebar:
     periodo = st.selectbox("Período", ["1mo", "3mo", "6mo", "1y"])
 
 if ticker:
-    data = yf.download(ticker, period=periodo, interval="1d")
-    
-    if not data.empty:
-        # Extrair valores como números puros (float)
-        ultimo_preco = float(data['Close'].iloc[-1])
-        preco_anterior = float(data['Close'].iloc[-2])
-        delta_pct = ((ultimo_preco - preco_anterior) / preco_anterior) * 100
+    try:
+        # Baixa os dados
+        data = yf.download(ticker, period=periodo, interval="1d")
         
-        # Dashboard Superior
-        col1, col2, col3 = st.columns(3)
-        # Passando apenas valores float para evitar o TypeError
-        col1.metric("Preço Atual", f"US$ {ultimo_preco:,.2f}", f"{delta_pct:.2f}%")
-        col2.metric("Máxima", f"US$ {float(data['High'].max()):,.2f}")
-        col3.metric("Mínima", f"US$ {float(data['Low'].min()):,.2f}")
-        
-        st.line_chart(data['Close'])
-        
-        with st.expander("Dados Brutos"):
-            st.dataframe(data.tail(10))
-    else:
-        st.error("Ativo não encontrado.")
+        if not data.empty and 'Close' in data.columns:
+            # Seleciona o último preço de forma segura e converte para float
+            # .iloc[-1] pega a última linha, .item() extrai o valor numérico
+            ultimo_preco = data['Close'].iloc[-1].item()
+            preco_anterior = data['Close'].iloc[-2].item()
+            
+            delta_pct = ((ultimo_preco - preco_anterior) / preco_anterior) * 100
+            
+            # Dashboard Superior
+            col1, col2, col3 = st.columns(3)
+            col1.metric("Preço Atual", f"US$ {ultimo_preco:,.2f}", f"{delta_pct:.2f}%")
+            col2.metric("Máxima", f"US$ {data['High'].max().item():,.2f}")
+            col3.metric("Mínima", f"US$ {data['Low'].min().item():,.2f}")
+            
+            st.line_chart(data['Close'])
+            
+            with st.expander("Dados Brutos"):
+                st.dataframe(data.tail(10))
+        else:
+            st.warning("Dados indisponíveis para este ativo. Tente outro.")
+    except Exception as e:
+        st.error(f"Erro ao processar dados: {e}")
         
