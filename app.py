@@ -6,7 +6,6 @@ st.set_page_config(page_title="Trader Pro", layout="wide")
 
 st.title("📊 Trader Pro | Dashboard Executivo")
 
-# Barra lateral de controle
 with st.sidebar:
     st.header("Configurações")
     ticker = st.text_input("Ativo", "BTC-USD").upper()
@@ -15,35 +14,35 @@ with st.sidebar:
 
 try:
     dados = yf.Ticker(ticker)
-    hist = dados.history(period="1mo") # 1 mês de histórico
+    hist = dados.history(period="1mo")
     preco = hist['Close'].iloc[-1]
     media = hist['Close'].rolling(window=5).mean().iloc[-1]
     
-    # Métricas de topo
     col1, col2 = st.columns(2)
     col1.metric("Preço Atual", f"R$ {preco:,.2f}")
     col2.metric("Média 5d", f"R$ {media:,.2f}")
     
-    # Análise de Performance
     st.markdown("### 📈 Análise de Tendência")
-    st.line_chart(hist['Close']) # Gráfico de linha profissional
+    st.line_chart(hist['Close'])
     
-    # Caixa de Decisão com cálculo de lucro
+    # Tabela de Estatísticas (O toque de mestre)
+    st.write("### 📊 Resumo Estatístico")
+    resumo = pd.DataFrame({
+        "Máxima (1 mês)": [hist['High'].max()],
+        "Mínima (1 mês)": [hist['Low'].min()],
+        "Volatilidade": [f"{((hist['Close'].std()/preco)*100):.2f}%"]
+    })
+    st.table(resumo)
+    
     if preco < media:
-        st.success("✅ SINAL: COMPRA DETECTADA")
-        lucro_potencial = (media - preco)
-        st.write(f"Potencial de retorno técnico: R$ {lucro_potencial:,.2f} por unidade.")
+        st.success("✅ SINAL: COMPRA")
     else:
-        st.warning("⚠️ SINAL: AGUARDAR (Tendência de baixa)")
+        st.warning("⚠️ SINAL: AGUARDAR")
         
-    # Gerenciamento de Risco
     st.markdown("### 🛡️ Gestão de Risco")
     stop_loss = preco * (1 - (risco/100))
-    perda_maxima = capital * (risco/100)
-    
     st.info(f"**STOP LOSS:** R$ {stop_loss:,.2f}")
-    st.error(f"**Exposição de Risco:** Se atingir o stop, você perderá R$ {perda_maxima:,.2f} do seu capital.")
 
 except:
-    st.error("Erro ao carregar dados. Verifique o ativo.")
+    st.error("Erro ao carregar.")
     
