@@ -1,8 +1,12 @@
-import plotly.graph_objects as go
-
-# No lugar do st.line_chart:
-fig = go.Figure(data=[go.Candlestick(x=hist.index,
-                open=hist['Open'], high=hist['High'],
-                low=hist['Low'], close=hist['Close'])])
-fig.update_layout(title="Preço em Tempo Real", template="plotly_dark")
-st.plotly_chart(fig, use_container_width=True)
+# Monitor de Operações
+with st.expander("📝 Ver Ordens Abertas"):
+    try:
+        exchange = get_exchange()
+        open_orders = exchange.fetch_open_orders(par)
+        if open_orders:
+            st.table(pd.DataFrame(open_orders))
+        else:
+            st.write("Nenhuma ordem aberta.")
+    except:
+        st.write("Conecte a API para ver ordens.")
+      
