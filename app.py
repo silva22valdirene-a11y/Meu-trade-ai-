@@ -3,37 +3,49 @@ import yfinance as yf
 import pandas as pd
 
 st.set_page_config(page_title="Trader Pro", layout="wide")
-st.title("📈 Trader Pro | Terminal de Análise")
+st.title("📈 Trader Pro | Terminal Avançado")
 
+# Barra Lateral: Configurações Profissionais
 with st.sidebar:
-    ticker = st.text_input("Ativo (ex: BTC-USD)", "BTC-USD")
+    st.header("Ferramentas")
+    ativos = st.text_input("Ativos (separados por vírgula)", "BTC-USD, ETH-USD")
     periodo = st.selectbox("Período", ["1mo", "3mo", "6mo", "1y"])
+    intervalo = st.selectbox("Intervalo", ["1d", "1h", "1wk"])
+    st.divider()
+    mostrar_rsi = st.checkbox("Mostrar RSI", True)
 
-if ticker:
+# Processamento dos ativos
+lista_ativos = [a.strip() for a in ativos.split(",")]
+
+for ticker in lista_ativos:
     try:
-        # Baixa os dados
-        data = yf.download(ticker, period=periodo, interval="1d")
-        
-        if not data.empty and 'Close' in data.columns:
-            # Seleciona o último preço de forma segura e converte para float
-            # .iloc[-1] pega a última linha, .item() extrai o valor numérico
-            ultimo_preco = data['Close'].iloc[-1].item()
-            preco_anterior = data['Close'].iloc[-2].item()
+        data = yf.download(ticker, period=periodo, interval=intervalo)
+        if not data.empty:
+            # Cálculos Profissionais
+            data['SMA_20'] = data['Close'].rolling(window=20).mean()
             
-            delta_pct = ((ultimo_preco - preco_anterior) / preco_anterior) * 100
+            # Cálculo RSI
+            delta = data['Close'].diff()
+            gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
+            loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
+            rs = gain / loss
+            data['RSI'] = 100 - (100 / (1 + rs))
             
-            # Dashboard Superior
+            # Exibição
+            st.subheader(f"Análise: {ticker}")
             col1, col2, col3 = st.columns(3)
-            col1.metric("Preço Atual", f"US$ {ultimo_preco:,.2f}", f"{delta_pct:.2f}%")
-            col2.metric("Máxima", f"US$ {data['High'].max().item():,.2f}")
-            col3.metric("Mínima", f"US$ {data['Low'].min().item():,.2f}")
+            col1.metric("Preço Atual", f"US$ {data['Close'].iloc[-1].item():,.2f}")
+            col2.metric("Média Móvel (20)", f"US$ {data['SMA_20'].iloc[-1]:,.2f}")
+            col3.metric("RSI Atual", f"{data['RSI'].iloc[-1]:.2f}")
             
-            st.line_chart(data['Close'])
+            st.line_chart(data[['Close', 'SMA_20']])
+            if mostrar_rsi:
+                st.line_chart(data['RSI'])
             
-            with st.expander("Dados Brutos"):
-                st.dataframe(data.tail(10))
+            with st.expander(f"Dados técnicos de {ticker}"):
+                st.dataframe(data.tail())
         else:
-            st.warning("Dados indisponíveis para este ativo. Tente outro.")
+            st.error(f"Ativo {ticker} não encontrado.")
     except Exception as e:
-        st.error(f"Erro ao processar dados: {e}")
+        st.error(f"Erro no ativo {ticker}: {e}")
         
