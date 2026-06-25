@@ -31,3 +31,4 @@ if ticker:
             st.dataframe(data.tail(10))
     else:
         st.error("Ativo não encontrado.")
+        
