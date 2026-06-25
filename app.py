@@ -1,41 +1,52 @@
 import streamlit as st
 import yfinance as yf
 
-# Configuração da página para ocupar a tela toda
-st.set_page_config(page_title="Trader Pro", layout="centered")
+st.set_page_config(page_title="Trader Pro 3.0", layout="wide")
 
-# Estilo usando colunas e containers
-st.title("📊 Trader Pro 3.0")
-st.markdown("---")
+st.markdown("""
+    <style>
+    .stMetric {background-color: #1e1e1e; padding: 15px; border-radius: 10px;}
+    </style>
+""", unsafe_allow_html=True)
 
-col1, col2 = st.columns(2)
+st.title("📊 Trader Pro | Dashboard Executivo")
 
-with col1:
+# Barra lateral para configurações
+with st.sidebar:
+    st.header("Configurações")
     ticker = st.text_input("Ativo", "BTC-USD").upper()
+    capital = st.number_input("Capital (R$)", value=1000.0)
+    risco = st.slider("Margem de Risco (%)", 1, 10, 5)
 
-with col2:
-    capital = st.number_input("Capital (R$)", min_value=100.0, value=1000.0)
-
-if st.button("🚀 Executar Análise de Alta Performance"):
+# Área principal
+if st.button("🚀 ATUALIZAR DADOS DE MERCADO"):
     try:
         dados = yf.Ticker(ticker)
         preco = dados.history(period="1d")['Close'].iloc[-1]
         media = dados.history(period="5d")['Close'].mean()
-        stop_loss = preco * 0.95
         
-        # Dashboard visual
-        st.metric(label=f"Cotação Atual de {ticker}", value=f"R$ {preco:,.2f}")
+        # Colunas de Destaque
+        col1, col2, col3 = st.columns(3)
+        col1.metric("Preço Atual", f"R$ {preco:,.2f}")
+        col2.metric("Média 5d", f"R$ {media:,.2f}")
+        col3.metric("Capital", f"R$ {capital:,.2f}")
         
-        # Área de alerta com design diferenciado
+        st.markdown("---")
+        
+        # Área de Análise Visual
         if preco < media:
-            st.success("SINAL DETECTADO: COMPRA")
+            st.success("✅ OPORTUNIDADE DE COMPRA: O preço está abaixo da média móvel.")
         else:
-            st.error("SINAL DETECTADO: AGUARDAR")
+            st.error("⚠️ AGUARDAR: O ativo está sobrecomprado acima da média.")
             
-        # Tabela de Riscos
-        st.write("### Gerenciamento de Risco")
-        st.info(f"**Stop Loss Sugerido:** R$ {stop_loss:,.2f}")
+        # Gerenciamento de Risco Visual
+        st.subheader("Gerenciamento de Risco")
+        stop_loss = preco * (1 - (risco/100))
+        
+        st.write(f"Nível de proteção em {risco}%:")
+        st.progress((risco)/10)
+        st.info(f"**STOP LOSS SUGERIDO:** R$ {stop_loss:,.2f}")
         
     except Exception:
-        st.warning("Verifique o código do ativo.")
+        st.error("Erro ao buscar dados. Verifique o símbolo do ativo.")
         
