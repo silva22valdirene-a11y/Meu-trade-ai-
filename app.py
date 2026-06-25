@@ -1,42 +1,49 @@
 import streamlit as st
 import yfinance as yf
+import pandas as pd
 
-# Configuração de Layout
 st.set_page_config(page_title="Trader Pro", layout="wide")
 
-st.title("📊 Trader Pro 3.0")
+st.title("📊 Trader Pro | Dashboard Executivo")
 
-# Inputs na lateral
+# Barra lateral de controle
 with st.sidebar:
     st.header("Configurações")
     ticker = st.text_input("Ativo", "BTC-USD").upper()
     capital = st.number_input("Capital (R$)", value=1000.0)
     risco = st.slider("Margem de Risco (%)", 1, 10, 5)
 
-# Tenta carregar os dados automaticamente
 try:
     dados = yf.Ticker(ticker)
-    hist = dados.history(period="5d")
+    hist = dados.history(period="1mo") # 1 mês de histórico
     preco = hist['Close'].iloc[-1]
-    media = hist['Close'].mean()
+    media = hist['Close'].rolling(window=5).mean().iloc[-1]
     
-    # Exibe as métricas de imediato (sem precisar clicar)
+    # Métricas de topo
     col1, col2 = st.columns(2)
     col1.metric("Preço Atual", f"R$ {preco:,.2f}")
     col2.metric("Média 5d", f"R$ {media:,.2f}")
     
-    st.markdown("---")
+    # Análise de Performance
+    st.markdown("### 📈 Análise de Tendência")
+    st.line_chart(hist['Close']) # Gráfico de linha profissional
     
-    # Lógica de compra
+    # Caixa de Decisão com cálculo de lucro
     if preco < media:
-        st.success("✅ OPORTUNIDADE DE COMPRA")
+        st.success("✅ SINAL: COMPRA DETECTADA")
+        lucro_potencial = (media - preco)
+        st.write(f"Potencial de retorno técnico: R$ {lucro_potencial:,.2f} por unidade.")
     else:
-        st.warning("⚠️ AGUARDAR: Ativo sobrecomprado")
+        st.warning("⚠️ SINAL: AGUARDAR (Tendência de baixa)")
         
-    # Risco
+    # Gerenciamento de Risco
+    st.markdown("### 🛡️ Gestão de Risco")
     stop_loss = preco * (1 - (risco/100))
-    st.info(f"**STOP LOSS SUGERIDO:** R$ {stop_loss:,.2f}")
+    perda_maxima = capital * (risco/100)
+    
+    st.info(f"**STOP LOSS:** R$ {stop_loss:,.2f}")
+    st.error(f"**Exposição de Risco:** Se atingir o stop, você perderá R$ {perda_maxima:,.2f} do seu capital.")
 
 except:
-    st.error("Digite um ativo válido (ex: BTC-USD)")
+    st.error("Erro ao carregar dados. Verifique o ativo.")
     
