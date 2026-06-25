@@ -1,3 +1,6 @@
 streamlit
 yfinance
 ccxt
+pandas
+plotly
+
