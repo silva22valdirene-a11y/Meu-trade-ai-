@@ -5,14 +5,13 @@ import hashlib
 import time
 import urllib.parse
 
-st.title("Central de Acúmulo (DCA) - TAPI V4")
+st.title("Central de Acúmulo (DCA) - TAPI v4")
 
-# Certifique-se de que as chaves estão corretas no Secrets do Streamlit Cloud
+# Certifique-se de que estas chaves estão configuradas nos Secrets do seu repositório no Streamlit Cloud
 API_KEY = st.secrets["MB_API_KEY"]
 API_SECRET = st.secrets["MB_API_SECRET"]
 
-def executar_ordem_tapi_v4(valor_brl, preco_atual):
-    # O endpoint da TAPI v4 é este caminho raiz
+def executar_ordem_tapi(valor_brl, preco_atual):
     url = "https://www.mercadobitcoin.net/tapi/v4/"
     
     # Parâmetros necessários para a função 'place_order'
@@ -25,9 +24,10 @@ def executar_ordem_tapi_v4(valor_brl, preco_atual):
         "limit_price": f"{preco_atual:.2f}"
     }
     
+    # A TAPI exige que os parâmetros sejam codificados como formulário
     params_encoded = urllib.parse.urlencode(params)
     
-    # A assinatura é feita sobre a string codificada
+    # A assinatura deve ser gerada sobre a string dos parâmetros
     signature = hmac.new(API_SECRET.encode('utf-8'), 
                          params_encoded.encode('utf-8'), 
                          hashlib.sha512).hexdigest()
@@ -38,13 +38,14 @@ def executar_ordem_tapi_v4(valor_brl, preco_atual):
         'Content-Type': 'application/x-www-form-urlencoded'
     }
     
+    # Executa a requisição POST
     return requests.post(url, data=params_encoded, headers=headers)
 
-if st.button("EXECUTAR COMPRA - TAPI V4"):
+if st.button("EXECUTAR COMPRA - TAPI v4"):
     st.info("Conectando ao Broker...")
     try:
-        # Preço de referência fixo para teste
-        res = executar_ordem_tapi_v4(25.0, 315000.0)
+        # Preço de referência fixo para teste imediato
+        res = executar_ordem_tapi(25.0, 315000.0)
         
         st.write(f"Status Code: {res.status_code}")
         
@@ -52,7 +53,8 @@ if st.button("EXECUTAR COMPRA - TAPI V4"):
             st.json(res.json())
         else:
             st.error(f"Erro na execução (Status {res.status_code})")
-            st.text(res.text[:500])
+            # Exibe os primeiros caracteres para diagnóstico
+            st.text(res.text[:200]) 
     except Exception as e:
-        st.error(f"Erro crítico: {e}")
+        st.error(f"Erro no sistema: {e}")
         
