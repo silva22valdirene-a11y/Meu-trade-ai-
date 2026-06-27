@@ -1,11 +1,13 @@
-import requests
-import hmac
-import hashlib
-import time
+import ccxt
+import streamlit as st
 
-# Exemplo de estrutura para conectar via API direta do Mercado Bitcoin
-def get_balance(api_key, api_secret):
-    # A lógica aqui muda para usar a URL oficial do Mercado Bitcoin
-    # e assinar a requisição com HMAC-SHA512 conforme a documentação deles
-    pass
-  
+# Carrega as chaves do segredo que você configurou no painel
+api_key = st.secrets["MB_API_KEY"]
+api_secret = st.secrets["MB_API_SECRET"]
+
+# Conecta ao Mercado Bitcoin
+exchange = ccxt.mercadobitcoin({
+    'apiKey': api_key,
+    'secret': api_secret,
+})
+
