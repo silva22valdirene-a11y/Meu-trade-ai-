@@ -1,13 +1,13 @@
 import ccxt
 import streamlit as st
 
-# Carrega as chaves do segredo que você configurou no painel
-api_key = st.secrets["MB_API_KEY"]
-api_secret = st.secrets["MB_API_SECRET"]
+# Tente listar as corretoras que ele conhece
+st.write("Lista completa de exchanges:", ccxt.exchanges)
 
-# Conecta ao Mercado Bitcoin
-exchange = ccxt.mercadobitcoin({
-    'apiKey': api_key,
-    'secret': api_secret,
-})
-
+# Tente usar o acesso genérico
+try:
+    exchange = ccxt.load_exchange('mercadobitcoin')
+    st.write("Conexão bem-sucedida!")
+except Exception as e:
+    st.write("Erro ao conectar:", e)
+    
