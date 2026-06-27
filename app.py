@@ -1,26 +1,17 @@
-import streamlit as st
+import hmac
+import hashlib
+import time
 import requests
+import streamlit as st
 
-# 1. Função para pegar o preço atual
-def get_price():
-    url = "https://api.mercadobitcoin.net/api/v4/tickers?symbols=BTC-BRL"
-    response = requests.get(url)
-    if response.status_code == 200:
-        return float(response.json()[0].get('last'))
-    return None
+# Exemplo de função de assinatura (HMAC-SHA512)
+def sign_request(api_secret, message):
+    signature = hmac.new(api_secret.encode('utf-8'), message.encode('utf-8'), hashlib.sha512)
+    return signature.hexdigest()
 
-st.title("Central de Acúmulo (DCA) - Mercado Bitcoin")
-
-# 2. Interface para definir o investimento
-preco_atual = get_price()
-if preco_atual:
-    st.write(f"Preço atual do BTC: R$ {preco_atual:,.2f}")
-    
-    valor_investimento = st.number_input("Quanto deseja investir em R$?", min_value=10.0, step=10.0)
-    
-    if valor_investimento > 0:
-        quantidade_btc = valor_investimento / preco_atual
-        st.write(f"Com R$ {valor_investimento}, você acumularia: {quantidade_btc:.8f} BTC")
-else:
-    st.error("Não foi possível conectar à API.")
+def execute_buy_order(pair, quantity, price):
+    # Aqui vai a lógica para chamar a API de pedidos (POST /v4/orders)
+    # Você precisará usar as chaves que estão no seu Secrets (MB_API_KEY, MB_API_SECRET)
+    st.info(f"Simulando compra de {quantity} BTC a R$ {price}...")
+    # ... código de requisição POST vai aqui ...
     
