@@ -1,33 +1,23 @@
-import streamlit as st
-import requests
-import hmac
-import hashlib
-import time
-import urllib.parse
-
-st.title("Central de Acúmulo (DCA)")
-
-# Chaves
-API_KEY = st.secrets["MB_API_KEY"]
-API_SECRET = st.secrets["MB_API_SECRET"]
-
 def assinar_e_executar():
-    # 1. Preparar os dados
-    path = "/tapi/v3/"
+    # A URL da API v4 para ordens é diferente
+    url = "https://api.mercadobitcoin.net/api/v4/orders"
+    
+    # Parâmetros conforme a documentação da v4
     tonce = str(int(time.time() * 1000))
     params = {
-        "tapi_method": "place_order",
-        "tapi_nonce": tonce,
         "pair": "BTC-BRL",
         "type": "buy",
         "quantity": "0.0001",
         "limit_price": "315000"
     }
     
-    # 2. Assinatura
+    # Na v4, a assinatura é feita no corpo da requisição
     params_encoded = urllib.parse.urlencode(params)
+    
+    # Criando a assinatura (HMAC-SHA512)
+    # Na v4, a assinatura geralmente usa o payload da requisição
     signature = hmac.new(API_SECRET.encode('utf-8'), 
-                         (path + '?' + params_encoded).encode('utf-8'), 
+                         params_encoded.encode('utf-8'), 
                          hashlib.sha512).hexdigest()
     
     headers = {
@@ -36,20 +26,6 @@ def assinar_e_executar():
         'Content-Type': 'application/x-www-form-urlencoded'
     }
     
-    # 3. Execução
-    response = requests.post("https://www.mercadobitcoin.net" + path, data=params_encoded, headers=headers)
+    response = requests.post(url, data=params_encoded, headers=headers)
     return response
-
-# Interface
-if st.button("EXECUTAR COMPRA REAL"):
-    st.warning("Enviando ordem...")
-    try:
-        res = assinar_e_executar()
-        if res.status_code == 200:
-            st.success("Resposta do servidor:")
-            st.json(res.json())
-        else:
-            st.error(f"Erro {res.status_code}: {res.text}")
-    except Exception as e:
-        st.error(f"Erro de execução: {e}")
-      
+    
