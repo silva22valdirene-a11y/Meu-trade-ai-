@@ -5,18 +5,18 @@ def get_price():
     url = "https://api.mercadobitcoin.net/api/v4/tickers?symbols=BTC-BRL"
     try:
         response = requests.get(url)
-        # Verifica se a requisição deu certo (status 200)
         if response.status_code == 200:
             data = response.json()
-            # Verifica se os dados existem antes de acessar
-            if 'tickers' in data and len(data['tickers']) > 0:
-                return data['tickers'][0]['last']
-            else:
-                return "Erro: Estrutura da resposta inesperada."
+            # AQUI ESTÁ O SEGREDO: Vamos mostrar o que o site respondeu
+            st.write("Dados recebidos da API:", data) 
+            
+            # Tente acessar de uma forma mais flexível
+            if 'tickers' in data:
+                return data['tickers'].get('BTC-BRL', {}).get('last', 'Não encontrado')
+            return "Estrutura diferente da esperada"
         else:
-            return f"Erro na API: {response.status_code}"
+            return f"Erro HTTP: {response.status_code}"
     except Exception as e:
-        return f"Erro de conexão: {e}"
+        return f"Erro: {e}"
 
 st.write("Preço atual do BTC:", get_price())
-
