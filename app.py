@@ -1,51 +1,26 @@
-import streamlit as st
 import ccxt
+import os
 
-st.set_page_config(page_title="Central de Acúmulo", layout="wide")
+# Pega as chaves diretamente das configurações do GitHub (Secrets)
+api_key = os.environ.get('MB_API_KEY')
+api_secret = os.environ.get('MB_API_SECRET')
 
-# Menu de Navegação
-aba = st.sidebar.radio("Navegação", ["Dashboard", "Configurações"])
-
-# --- ABA DE CONFIGURAÇÕES ---
-if aba == "Configurações":
-    st.title("⚙️ Conectar Corretora")
-    st.write("Insira suas chaves de API da Binance (ou outra exchange).")
+def executar_compra():
+    # Conecta no Mercado Bitcoin
+    exchange = ccxt.mercadobitcoin({'apiKey': api_key, 'secret': api_secret})
     
-    api_key = st.text_input("API Key", type="password")
-    api_secret = st.text_input("API Secret", type="password")
+    # Executa uma compra de mercado (Market Order)
+    # Exemplo: Comprar R$ 50,00 de BTC/BRL
+    symbol = 'BTC/BRL'
+    amount_brl = 50.00
     
-    if st.button("Salvar e Conectar"):
-        st.session_state['api_key'] = api_key
-        st.session_state['api_secret'] = api_secret
-        st.success("Credenciais guardadas nesta sessão!")
-
-# --- ABA DASHBOARD (COM SALDO) ---
-elif aba == "Dashboard":
-    st.title("💰 Central de Acúmulo (DCA)")
+    ticker = exchange.fetch_ticker(symbol)
+    price = ticker['last']
+    amount_btc = amount_brl / price
     
-    if 'api_key' in st.session_state and 'api_secret' in st.session_state:
-        try:
-            exchange = ccxt.binance({
-                'apiKey': st.session_state['api_key'],
-                'secret': st.session_state['api_secret'],
-                'enableRateLimit': True,
-            })
-            
-            # Buscar saldo
-            balance = exchange.fetch_balance()
-            total_usdt = balance['total'].get('USDT', 0)
-            
-            st.metric("Saldo em USDT na Binance", f"USDT {total_usdt:,.2f}")
-            st.success("Conectado com sucesso!")
-            
-        except Exception as e:
-            st.error(f"Erro ao conectar: {e}")
-    else:
-        st.warning("Por favor, vá na aba 'Configurações' e conecte a sua API Key.")
+    order = exchange.create_market_buy_order(symbol, amount_btc)
+    print(f"Compra realizada com sucesso: {order}")
 
-    # Simulador DCA
-    st.divider()
-    valor_mensal = st.number_input("Investimento Mensal (R$)", value=100.0)
-    if st.button("Simular Crescimento"):
-        st.write(f"Você está acumulando R$ {valor_mensal} mensalmente.")
-        
+if __name__ == "__main__":
+    executar_compra()
+    
