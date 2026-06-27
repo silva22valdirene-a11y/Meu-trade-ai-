@@ -5,17 +5,17 @@ import hashlib
 import time
 import urllib.parse
 
-st.title("Central de Acúmulo (DCA) - Ajuste Final")
+st.title("Central de Acúmulo (DCA) - Oficial V4")
 
 API_KEY = st.secrets["MB_API_KEY"]
 API_SECRET = st.secrets["MB_API_SECRET"]
 
-def executar_ordem_final(valor_brl, preco_atual):
-    # O endpoint correto de ordens na TAPI v4 é o caminho raiz
+def executar_ordem_v4(valor_brl, preco_atual):
+    # O endpoint oficial para transações TAPI v4
     url = "https://www.mercadobitcoin.net/tapi/v4/"
     
-    # Parâmetros necessários para a TAPI v4
-    params = {
+    # Montagem do Payload
+    payload = {
         "tapi_method": "place_order",
         "tapi_nonce": str(int(time.time() * 1000)),
         "pair": "BTC-BRL",
@@ -24,13 +24,11 @@ def executar_ordem_final(valor_brl, preco_atual):
         "limit_price": f"{preco_atual:.2f}"
     }
     
-    params_encoded = urllib.parse.urlencode(params)
+    params_encoded = urllib.parse.urlencode(payload)
     
-    # A assinatura deve ser feita sobre o caminho do endpoint + a query string
-    # Tente esta combinação de path para a TAPI v4
-    path = "/tapi/v4/"
+    # Assinatura HMAC-SHA512 exigida pela TAPI
     signature = hmac.new(API_SECRET.encode('utf-8'), 
-                         (path + "?" + params_encoded).encode('utf-8'), 
+                         ("/tapi/v4/?" + params_encoded).encode('utf-8'), 
                          hashlib.sha512).hexdigest()
     
     headers = {
@@ -41,19 +39,20 @@ def executar_ordem_final(valor_brl, preco_atual):
     
     return requests.post(url, data=params_encoded, headers=headers)
 
-if st.button("EXECUTAR COMPRA FINAL"):
-    st.info("Tentando nova rota...")
+if st.button("EXECUTAR COMPRA TAPI"):
+    st.info("Conectando à TAPI...")
     try:
-        # Usando um valor de teste ou preço fixo para depuração
-        res = executar_ordem_final(25.0, 315000.0)
+        # Preço de referência para teste
+        res = executar_ordem_v4(25.0, 315000.0)
         
         st.write(f"Status Code: {res.status_code}")
+        
+        # Diagnóstico refinado
         if res.status_code == 200:
             st.json(res.json())
         else:
-            st.error("Erro na requisição. Verifique o Status Code acima.")
-            st.text(res.text[:500]) # Mostra apenas o início do erro
-            
+            st.error("Erro na comunicação.")
+            st.text(res.text[:300]) # Mostra o erro bruto para depuração
     except Exception as e:
-        st.error(f"Erro crítico: {e}")
+        st.error(f"Erro no sistema: {e}")
         
