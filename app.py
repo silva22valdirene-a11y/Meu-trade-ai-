@@ -5,14 +5,16 @@ import hashlib
 import time
 import urllib.parse
 
-st.title("Central de Acúmulo (DCA) - TAPI V4")
+st.title("Central de Acúmulo (DCA) - Ajuste Final")
 
 API_KEY = st.secrets["MB_API_KEY"]
 API_SECRET = st.secrets["MB_API_SECRET"]
 
-def executar_ordem_tapi(valor_brl, preco_atual):
+def executar_ordem_final(valor_brl, preco_atual):
+    # O endpoint correto de ordens na TAPI v4 é o caminho raiz
     url = "https://www.mercadobitcoin.net/tapi/v4/"
     
+    # Parâmetros necessários para a TAPI v4
     params = {
         "tapi_method": "place_order",
         "tapi_nonce": str(int(time.time() * 1000)),
@@ -23,10 +25,12 @@ def executar_ordem_tapi(valor_brl, preco_atual):
     }
     
     params_encoded = urllib.parse.urlencode(params)
-    path = "/tapi/v4/"
     
+    # A assinatura deve ser feita sobre o caminho do endpoint + a query string
+    # Tente esta combinação de path para a TAPI v4
+    path = "/tapi/v4/"
     signature = hmac.new(API_SECRET.encode('utf-8'), 
-                         (path + '?' + params_encoded).encode('utf-8'), 
+                         (path + "?" + params_encoded).encode('utf-8'), 
                          hashlib.sha512).hexdigest()
     
     headers = {
@@ -37,19 +41,19 @@ def executar_ordem_tapi(valor_brl, preco_atual):
     
     return requests.post(url, data=params_encoded, headers=headers)
 
-if st.button("EXECUTAR COMPRA TAPI"):
-    st.info("Processando...")
+if st.button("EXECUTAR COMPRA FINAL"):
+    st.info("Tentando nova rota...")
     try:
-        res = executar_ordem_tapi(25.0, 315000.0)
+        # Usando um valor de teste ou preço fixo para depuração
+        res = executar_ordem_final(25.0, 315000.0)
         
-        # Verificação: Tenta exibir o texto bruto se o JSON falhar
         st.write(f"Status Code: {res.status_code}")
-        try:
+        if res.status_code == 200:
             st.json(res.json())
-        except:
-            st.error("Resposta do servidor não é JSON. Resposta bruta:")
-            st.text(res.text)
+        else:
+            st.error("Erro na requisição. Verifique o Status Code acima.")
+            st.text(res.text[:500]) # Mostra apenas o início do erro
             
     except Exception as e:
-        st.error(f"Erro na requisição: {e}")
+        st.error(f"Erro crítico: {e}")
         
