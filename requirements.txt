@@ -3,5 +3,4 @@ yfinance
 pandas
 plotly
 ccxt
-MB_API_KEY
-MB_API_SECRET
+
