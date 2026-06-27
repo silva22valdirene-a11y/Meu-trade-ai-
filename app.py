@@ -7,14 +7,12 @@ import urllib.parse
 
 st.title("Central de Acúmulo (DCA) - TAPI V4")
 
-# Certifique-se de que MB_API_KEY e MB_API_SECRET estão nos Secrets do Streamlit Cloud
 API_KEY = st.secrets["MB_API_KEY"]
 API_SECRET = st.secrets["MB_API_SECRET"]
 
 def executar_ordem_tapi(valor_brl, preco_atual):
     url = "https://www.mercadobitcoin.net/tapi/v4/"
     
-    # Parâmetros da TAPI
     params = {
         "tapi_method": "place_order",
         "tapi_nonce": str(int(time.time() * 1000)),
@@ -25,10 +23,10 @@ def executar_ordem_tapi(valor_brl, preco_atual):
     }
     
     params_encoded = urllib.parse.urlencode(params)
+    path = "/tapi/v4/"
     
-    # Assinatura (Path + ? + Params)
     signature = hmac.new(API_SECRET.encode('utf-8'), 
-                         ("/tapi/v4/?" + params_encoded).encode('utf-8'), 
+                         (path + '?' + params_encoded).encode('utf-8'), 
                          hashlib.sha512).hexdigest()
     
     headers = {
@@ -39,13 +37,19 @@ def executar_ordem_tapi(valor_brl, preco_atual):
     
     return requests.post(url, data=params_encoded, headers=headers)
 
-# Interface
 if st.button("EXECUTAR COMPRA TAPI"):
     st.info("Processando...")
     try:
-        # Exemplo com preco fixo ou busque o real
-        res = executar_ordem_tapi(25.0, 315000.0) 
-        st.write(res.json())
+        res = executar_ordem_tapi(25.0, 315000.0)
+        
+        # Verificação: Tenta exibir o texto bruto se o JSON falhar
+        st.write(f"Status Code: {res.status_code}")
+        try:
+            st.json(res.json())
+        except:
+            st.error("Resposta do servidor não é JSON. Resposta bruta:")
+            st.text(res.text)
+            
     except Exception as e:
-        st.error(str(e))
+        st.error(f"Erro na requisição: {e}")
         
