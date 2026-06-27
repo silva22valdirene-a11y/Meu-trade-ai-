@@ -7,33 +7,37 @@ import json
 
 st.title("Central de Acúmulo (DCA) - Oficial V4")
 
-# Certifique-se de que estes dois campos estão configurados nos "Secrets" do seu app no Streamlit Cloud
+# Configuração de chaves (Certifique-se de que estão no Secrets do Streamlit Cloud)
 API_KEY = st.secrets["MB_API_KEY"]
 API_SECRET = st.secrets["MB_API_SECRET"]
 
-def executar_compra_v4(valor_brl):
-    # Endpoint correto e atualizado para a API v4 de ordens
+# 1. Função de consulta pública (preço)
+def get_price():
+    url = "https://api.mercadobitcoin.net/api/v4/tickers?symbols=BTC-BRL"
+    response = requests.get(url)
+    if response.status_code == 200:
+        return float(response.json()[0].get('last'))
+    return None
+
+# 2. Função de compra (API v4)
+def executar_compra_v4(valor_brl, preco_atual):
     url = "https://api.mercadobitcoin.net/api/v4/orders"
+    qtd_btc = valor_brl / preco_atual
     
-    # 1. Definir o payload (dados da compra)
-    # Nota: substitua '315000' por uma função que busca o preço real se desejar
     payload = {
         "pair": "BTC-BRL",
         "type": "buy",
-        "quantity": "0.0001", 
-        "limit_price": "315000"
+        "quantity": f"{qtd_btc:.8f}",
+        "limit_price": f"{preco_atual:.2f}"
     }
     
-    # 2. Preparar os dados para a assinatura
-    # A v4 exige que a assinatura seja feita sobre o JSON dos dados
     payload_json = json.dumps(payload, separators=(',', ':'))
     
-    # 3. Gerar assinatura HMAC-SHA512
+    # Assinatura HMAC-SHA512
     signature = hmac.new(API_SECRET.encode('utf-8'), 
                          payload_json.encode('utf-8'), 
                          hashlib.sha512).hexdigest()
     
-    # 4. Configurar cabeçalhos com a chave e a assinatura
     headers = {
         'TAPI-ID': API_KEY,
         'TAPI-MAC': signature,
@@ -42,6 +46,22 @@ def executar_compra_v4(valor_brl):
     
     return requests.post(url, data=payload_json, headers=headers)
 
-if st.button("EXECUTAR COMPRA REAL"):
-    st.warning("Enviando ordem via API
-               
+# Interface
+preco = get_price()
+if preco:
+    st.metric("Preço Atual BTC", f"R$ {preco:,.2f}")
+    valor_input = st.number_input("Valor (R$):", min_value=25.0, step=10.0)
+    
+    if st.button("EXECUTAR COMPRA REAL"):
+        # Mensagem corrigida para evitar SyntaxError
+        st.warning("Enviando ordem via API...") 
+        try:
+            res = executar_compra_v4(valor_input, preco)
+            if res.status_code == 201:
+                st.success("Ordem enviada com sucesso!")
+                st.json(res.json())
+            else:
+                st.error(f"Erro {res.status_code}: {res.text}")
+        except Exception as e:
+            st.error(f"Erro no sistema: {e}")
+            
