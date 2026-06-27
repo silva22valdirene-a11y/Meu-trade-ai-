@@ -1,36 +1,15 @@
 import streamlit as st
-import ccxt
 
-# Configuração da página
-st.set_page_config(page_title="Bot de Trade", layout="wide")
+st.title("💰 Central de Acúmulo (DCA)")
 
-# Menu de Navegação
-st.sidebar.title("Navegação")
-aba = st.sidebar.radio("Ir para:", ["Dashboard", "Configurações", "Logs de Trade"])
+# Entrada do usuário
+valor_mensal = st.number_input("Quanto você quer investir por mês (R$)?", min_value=10.0, value=100.0)
+meta_anos = st.slider("Por quantos anos você vai investir?", 1, 30, 5)
 
-# --- ABA 1: DASHBOARD ---
-if aba == "Dashboard":
-    st.title("📊 Visão Geral do Mercado")
-    st.write("Monitorando o mercado em tempo real...")
-    # Aqui você poderá exibir preços (ex: st.metric("BTC/USDT", "65.000"))
-    st.info("O robô está aguardando sinais de entrada.")
+if st.button("Simular Crescimento"):
+    total_investido = valor_mensal * 12 * meta_anos
+    st.write(f"Em {meta_anos} anos, você terá investido **R$ {total_investido:,.2f}**.")
+    st.info("Essa é a sua base para criar patrimônio com segurança.")
 
-# --- ABA 2: CONFIGURAÇÕES ---
-elif aba == "Configurações":
-    st.title("⚙️ Configurações do Bot")
-    api_key = st.text_input("API Key", type="password")
-    api_secret = st.text_input("API Secret", type="password")
-    
-    if st.button("Salvar Conexão"):
-        if api_key and api_secret:
-            st.success("Credenciais salvas temporariamente na sessão.")
-        else:
-            st.error("Por favor, preencha as chaves.")
-
-# --- ABA 3: LOGS DE TRADE ---
-elif aba == "Logs de Trade":
-    st.title("📜 Histórico de Operações")
-    st.write("Registros de ordens executadas:")
-    # Aqui vamos mostrar o histórico quando você tiver trades
-    st.warning("Nenhum trade realizado nas últimas 24h.")
-    
+st.subheader("Minha Carteira")
+st.write("Aqui vamos conectar a sua corretora (Binance/Bybit) para mostrar o saldo atualizado.")
