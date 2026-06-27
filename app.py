@@ -7,14 +7,15 @@ import urllib.parse
 
 st.title("Central de Acúmulo (DCA) - TAPI v4")
 
-# Certifique-se de que as chaves estão configuradas nos Secrets do Streamlit Cloud
+# Certifique-se de que MB_API_KEY e MB_API_SECRET estão definidos no Streamlit Cloud
 API_KEY = st.secrets["MB_API_KEY"]
 API_SECRET = st.secrets["MB_API_SECRET"]
 
 def executar_ordem_tapi_v4(valor_brl, preco_atual):
-    # O endpoint oficial e único para a TAPI v4
+    # A URL raiz da TAPI v4 é a única correta para negociações
     url = "https://www.mercadobitcoin.net/tapi/v4/"
     
+    # Parâmetros da TAPI
     params = {
         "tapi_method": "place_order",
         "tapi_nonce": str(int(time.time() * 1000)),
@@ -24,10 +25,10 @@ def executar_ordem_tapi_v4(valor_brl, preco_atual):
         "limit_price": f"{preco_atual:.2f}"
     }
     
-    # A TAPI exige codificação de formulário
+    # Codificação obrigatória
     params_encoded = urllib.parse.urlencode(params)
     
-    # Assinatura HMAC-SHA512
+    # A assinatura deve ser feita sobre a string codificada
     signature = hmac.new(API_SECRET.encode('utf-8'), 
                          params_encoded.encode('utf-8'), 
                          hashlib.sha512).hexdigest()
@@ -44,7 +45,7 @@ def executar_ordem_tapi_v4(valor_brl, preco_atual):
 if st.button("EXECUTAR COMPRA - TAPI v4"):
     st.info("Conectando ao Broker...")
     try:
-        # Preço de exemplo para teste
+        # Preço de referência para teste
         res = executar_ordem_tapi_v4(25.0, 315000.0)
         
         st.write(f"Status Code: {res.status_code}")
