@@ -1,29 +1,36 @@
 import streamlit as st
 import ccxt
 
-# Configuração da Página
-st.set_page_config(page_title="Painel de Controle", layout="wide")
+# Configuração da página
+st.set_page_config(page_title="Bot de Trade", layout="wide")
 
-# Barra Lateral (Menu de Navegação)
+# Menu de Navegação
 st.sidebar.title("Navegação")
 aba = st.sidebar.radio("Ir para:", ["Dashboard", "Configurações", "Logs de Trade"])
 
-# Conteúdo principal baseado na aba escolhida
+# --- ABA 1: DASHBOARD ---
 if aba == "Dashboard":
     st.title("📊 Visão Geral do Mercado")
-    # Aqui vamos colocar os gráficos e preços em tempo real
-    st.write("Seu bot está ativo e monitorando.")
+    st.write("Monitorando o mercado em tempo real...")
+    # Aqui você poderá exibir preços (ex: st.metric("BTC/USDT", "65.000"))
+    st.info("O robô está aguardando sinais de entrada.")
 
+# --- ABA 2: CONFIGURAÇÕES ---
 elif aba == "Configurações":
     st.title("⚙️ Configurações do Bot")
-    # Aqui vamos colocar os campos para inserir API_KEY e SECRET (de forma segura)
-    st.text_input("API Key", type="password")
-    st.text_input("API Secret", type="password")
-    if st.button("Salvar Configurações"):
-        st.success("Configurações salvas!")
+    api_key = st.text_input("API Key", type="password")
+    api_secret = st.text_input("API Secret", type="password")
+    
+    if st.button("Salvar Conexão"):
+        if api_key and api_secret:
+            st.success("Credenciais salvas temporariamente na sessão.")
+        else:
+            st.error("Por favor, preencha as chaves.")
 
+# --- ABA 3: LOGS DE TRADE ---
 elif aba == "Logs de Trade":
-    st.title("📜 Histórico de Trades")
-    # Aqui o bot listará as ordens de compra e venda
-    st.write("Nenhuma operação registrada ainda.")
+    st.title("📜 Histórico de Operações")
+    st.write("Registros de ordens executadas:")
+    # Aqui vamos mostrar o histórico quando você tiver trades
+    st.warning("Nenhum trade realizado nas últimas 24h.")
     
