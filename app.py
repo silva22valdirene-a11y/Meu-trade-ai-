@@ -1,2 +1,5 @@
+import streamlit as st
 import ccxt
-st.write("Exchanges disponíveis:", ccxt.exchanges)
+
+# Agora o código pode reconhecer as ferramentas que você importou acima
+st.write("Exchanges disponíveis no CCXT:", ccxt.exchanges)
