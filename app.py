@@ -1,31 +1,21 @@
-def assinar_e_executar():
-    # A URL da API v4 para ordens é diferente
-    url = "https://api.mercadobitcoin.net/api/v4/orders"
-    
-    # Parâmetros conforme a documentação da v4
-    tonce = str(int(time.time() * 1000))
-    params = {
-        "pair": "BTC-BRL",
-        "type": "buy",
-        "quantity": "0.0001",
-        "limit_price": "315000"
-    }
-    
-    # Na v4, a assinatura é feita no corpo da requisição
-    params_encoded = urllib.parse.urlencode(params)
-    
-    # Criando a assinatura (HMAC-SHA512)
-    # Na v4, a assinatura geralmente usa o payload da requisição
-    signature = hmac.new(API_SECRET.encode('utf-8'), 
-                         params_encoded.encode('utf-8'), 
-                         hashlib.sha512).hexdigest()
-    
-    headers = {
-        'TAPI-ID': API_KEY,
-        'TAPI-MAC': signature,
-        'Content-Type': 'application/x-www-form-urlencoded'
-    }
-    
-    response = requests.post(url, data=params_encoded, headers=headers)
-    return response
-    
+import streamlit as st
+import requests
+
+st.title("Teste de Verificação")
+
+# Botão para verificar se o app está vivo
+if st.button("Testar Conexão"):
+    try:
+        # Apenas uma consulta pública (não precisa de chaves)
+        url = "https://api.mercadobitcoin.net/api/v4/tickers?symbols=BTC-BRL"
+        response = requests.get(url)
+        
+        if response.status_code == 200:
+            st.success("Conexão OK! O app está funcionando.")
+            st.write(response.json())
+        else:
+            st.error(f"Erro na conexão: Código {response.status_code}")
+            
+    except Exception as e:
+        st.error(f"Erro crítico: {e}")
+        
