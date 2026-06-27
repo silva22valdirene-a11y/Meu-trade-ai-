@@ -1,15 +1,51 @@
 import streamlit as st
+import ccxt
 
-st.title("💰 Central de Acúmulo (DCA)")
+st.set_page_config(page_title="Central de Acúmulo", layout="wide")
 
-# Entrada do usuário
-valor_mensal = st.number_input("Quanto você quer investir por mês (R$)?", min_value=10.0, value=100.0)
-meta_anos = st.slider("Por quantos anos você vai investir?", 1, 30, 5)
+# Menu de Navegação
+aba = st.sidebar.radio("Navegação", ["Dashboard", "Configurações"])
 
-if st.button("Simular Crescimento"):
-    total_investido = valor_mensal * 12 * meta_anos
-    st.write(f"Em {meta_anos} anos, você terá investido **R$ {total_investido:,.2f}**.")
-    st.info("Essa é a sua base para criar patrimônio com segurança.")
+# --- ABA DE CONFIGURAÇÕES ---
+if aba == "Configurações":
+    st.title("⚙️ Conectar Corretora")
+    st.write("Insira suas chaves de API da Binance (ou outra exchange).")
+    
+    api_key = st.text_input("API Key", type="password")
+    api_secret = st.text_input("API Secret", type="password")
+    
+    if st.button("Salvar e Conectar"):
+        st.session_state['api_key'] = api_key
+        st.session_state['api_secret'] = api_secret
+        st.success("Credenciais guardadas nesta sessão!")
 
-st.subheader("Minha Carteira")
-st.write("Aqui vamos conectar a sua corretora (Binance/Bybit) para mostrar o saldo atualizado.")
+# --- ABA DASHBOARD (COM SALDO) ---
+elif aba == "Dashboard":
+    st.title("💰 Central de Acúmulo (DCA)")
+    
+    if 'api_key' in st.session_state and 'api_secret' in st.session_state:
+        try:
+            exchange = ccxt.binance({
+                'apiKey': st.session_state['api_key'],
+                'secret': st.session_state['api_secret'],
+                'enableRateLimit': True,
+            })
+            
+            # Buscar saldo
+            balance = exchange.fetch_balance()
+            total_usdt = balance['total'].get('USDT', 0)
+            
+            st.metric("Saldo em USDT na Binance", f"USDT {total_usdt:,.2f}")
+            st.success("Conectado com sucesso!")
+            
+        except Exception as e:
+            st.error(f"Erro ao conectar: {e}")
+    else:
+        st.warning("Por favor, vá na aba 'Configurações' e conecte a sua API Key.")
+
+    # Simulador DCA
+    st.divider()
+    valor_mensal = st.number_input("Investimento Mensal (R$)", value=100.0)
+    if st.button("Simular Crescimento"):
+        st.write(f"Você está acumulando R$ {valor_mensal} mensalmente.")
+        
