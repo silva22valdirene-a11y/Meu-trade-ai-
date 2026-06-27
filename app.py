@@ -1,32 +1,57 @@
+import streamlit as st
+import requests
 import hmac
 import hashlib
 import time
-import requests
-import streamlit as st
+import urllib.parse
 
-# Carregando chaves do Secrets
+st.title("Central de Acúmulo (DCA)")
+
+# Chaves vindas do Streamlit Secrets
 API_KEY = st.secrets["MB_API_KEY"]
 API_SECRET = st.secrets["MB_API_SECRET"]
 
-def enviar_ordem_compra(valor_brl, preco_btc):
-    # Lógica de assinatura exigida pela corretora
-    url = "https://api.mercadobitcoin.net/api/v4/orders"
-    payload = {
-        "pair": "BTC-BRL",
-        "type": "buy",
-        "quantity": str(valor_brl / preco_btc),
-        "limit_price": str(preco_btc)
+def assinar_requisicao(path, params):
+    # Lógica de assinatura exigida pelo Mercado Bitcoin (TAPI)
+    tonce = str(int(time.time() * 1000))
+    params['tonce'] = tonce
+    params_encoded = urllib.parse.urlencode(params)
+    
+    # Criando a assinatura HMAC-SHA512
+    signature = hmac.new(API_SECRET.encode('utf-8'), 
+                         (path + '?' + params_encoded).encode('utf-8'), 
+                         hashlib.sha512).hexdigest()
+    
+    headers = {
+        'TAPI-ID': API_KEY,
+        'TAPI-MAC': signature,
+        'Content-Type': 'application/x-www-form-urlencoded'
     }
-    
-    # Você precisará construir o cabeçalho 'TAPI-ID' e 'TAPI-MAC' 
-    # conforme a documentação técnica da API da sua corretora.
-    
-    # Exemplo de requisição
-    # response = requests.post(url, data=payload, headers=headers)
-    return "Ordem enviada!"
+    return headers, params_encoded
 
-# Botão de Execução
 if st.button("EXECUTAR COMPRA REAL"):
-    st.warning("Tem certeza? Isso usará seu saldo real.")
-    # Chamar a função enviar_ordem_compra aqui
+    st.warning("Tentando executar a ordem...")
     
+    try:
+        # Exemplo: Comprar R$ 10,00 (valor mínimo)
+        path = "/tapi/v4/"
+        params = {
+            "tapi_method": "place_order",
+            "pair": "BTC-BRL",
+            "type": "buy",
+            "quantity": "0.0001", # Exemplo: ajuste conforme o preço atual
+            "limit_price": "315000" # Exemplo: preço limite
+        }
+        
+        headers, data = assinar_requisicao(path, params)
+        response = requests.post("https://www.mercadobitcoin.net" + path, data=data, headers=headers)
+        
+        if response.status_code == 200:
+            st.success("Compra enviada com sucesso!")
+            st.json(response.json())
+        else:
+            st.error(f"Erro ao enviar ordem: {response.text}")
+            
+    except Exception as e:
+        st.error(f"Falha na conexão: {e}")
+        
