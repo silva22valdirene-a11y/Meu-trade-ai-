@@ -1,22 +1,26 @@
 import streamlit as st
 import requests
 
-# Todo código que não está dentro de uma função ou 'if' deve começar rente à margem esquerda
-st.title("Teste de Conexão")
-
-url = "https://api.mercadobitcoin.net/api/v4/tickers?symbols=BTC-BRL"
-
-try:
-    response = requests.get(url, timeout=5)
-    
-    # O 'if' começa logo após o 'try'
+# 1. Função para pegar o preço atual
+def get_price():
+    url = "https://api.mercadobitcoin.net/api/v4/tickers?symbols=BTC-BRL"
+    response = requests.get(url)
     if response.status_code == 200:
-        data = response.json()
-        st.write("Dados recebidos com sucesso!")
-        st.write(data)
-    else:
-        st.error(f"Erro na API: {response.status_code}")
-        
-except Exception as e:
-    st.error(f"Erro inesperado: {e}")
+        return float(response.json()[0].get('last'))
+    return None
+
+st.title("Central de Acúmulo (DCA) - Mercado Bitcoin")
+
+# 2. Interface para definir o investimento
+preco_atual = get_price()
+if preco_atual:
+    st.write(f"Preço atual do BTC: R$ {preco_atual:,.2f}")
+    
+    valor_investimento = st.number_input("Quanto deseja investir em R$?", min_value=10.0, step=10.0)
+    
+    if valor_investimento > 0:
+        quantidade_btc = valor_investimento / preco_atual
+        st.write(f"Com R$ {valor_investimento}, você acumularia: {quantidade_btc:.8f} BTC")
+else:
+    st.error("Não foi possível conectar à API.")
     
