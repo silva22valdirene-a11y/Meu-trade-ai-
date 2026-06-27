@@ -1,1 +1,2 @@
-exchange = getattr(ccxt, 'mercadobitcoin')({'apiKey': api_key, 'secret': api_secret})
+import ccxt
+st.write("Exchanges disponíveis:", ccxt.exchanges)
