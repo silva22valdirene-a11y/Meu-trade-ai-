@@ -1,28 +1,32 @@
-import streamlit as st
+import hmac
+import hashlib
+import time
 import requests
+import streamlit as st
 
-st.title("Central de Acúmulo (DCA)")
+# Carregando chaves do Secrets
+API_KEY = st.secrets["MB_API_KEY"]
+API_SECRET = st.secrets["MB_API_SECRET"]
 
-# Função para buscar o preço
-def get_price():
-    url = "https://api.mercadobitcoin.net/api/v4/tickers?symbols=BTC-BRL"
-    response = requests.get(url, timeout=10)
-    if response.status_code == 200:
-        return float(response.json()[0].get('last'))
-    return None
+def enviar_ordem_compra(valor_brl, preco_btc):
+    # Lógica de assinatura exigida pela corretora
+    url = "https://api.mercadobitcoin.net/api/v4/orders"
+    payload = {
+        "pair": "BTC-BRL",
+        "type": "buy",
+        "quantity": str(valor_brl / preco_btc),
+        "limit_price": str(preco_btc)
+    }
+    
+    # Você precisará construir o cabeçalho 'TAPI-ID' e 'TAPI-MAC' 
+    # conforme a documentação técnica da API da sua corretora.
+    
+    # Exemplo de requisição
+    # response = requests.post(url, data=payload, headers=headers)
+    return "Ordem enviada!"
 
-# Interface
-if st.button("Buscar Preço Atual"):
-    preco = get_price()
-    if preco:
-        st.success(f"Preço atual do BTC: R$ {preco:,.2f}")
-        
-        # Campo para inserir o valor de investimento
-        valor = st.number_input("Valor para investir (R$):", min_value=10.0, step=10.0)
-        
-        if valor > 0:
-            qtd_btc = valor / preco
-            st.info(f"Com R$ {valor:,.2f}, você acumularia aproximadamente: {qtd_btc:.8f} BTC")
-    else:
-        st.error("Erro ao conectar com a API.")
-        
+# Botão de Execução
+if st.button("EXECUTAR COMPRA REAL"):
+    st.warning("Tem certeza? Isso usará seu saldo real.")
+    # Chamar a função enviar_ordem_compra aqui
+    
