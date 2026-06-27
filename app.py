@@ -7,15 +7,15 @@ import urllib.parse
 
 st.title("Central de Acúmulo (DCA) - TAPI v4")
 
-# Certifique-se de que MB_API_KEY e MB_API_SECRET estão definidos no Streamlit Cloud
+# Certifique-se de que MB_API_KEY e MB_API_SECRET estão configurados no Streamlit Cloud
 API_KEY = st.secrets["MB_API_KEY"]
 API_SECRET = st.secrets["MB_API_SECRET"]
 
-def executar_ordem_tapi(valor_brl, preco_atual):
-    # Endpoint oficial da TAPI v4
+def executar_ordem_tapi_v4(valor_brl, preco_atual):
+    # O endpoint obrigatório para a TAPI v4
     url = "https://www.mercadobitcoin.net/tapi/v4/"
     
-    # Parâmetros obrigatórios
+    # Parâmetros da TAPI
     params = {
         "tapi_method": "place_order",
         "tapi_nonce": str(int(time.time() * 1000)),
@@ -25,10 +25,10 @@ def executar_ordem_tapi(valor_brl, preco_atual):
         "limit_price": f"{preco_atual:.2f}"
     }
     
-    # Codificação dos parâmetros
+    # A TAPI exige codificação como formulário (x-www-form-urlencoded)
     params_encoded = urllib.parse.urlencode(params)
     
-    # Assinatura HMAC-SHA512
+    # Assinatura HMAC-SHA512 exigida pela TAPI
     signature = hmac.new(API_SECRET.encode('utf-8'), 
                          params_encoded.encode('utf-8'), 
                          hashlib.sha512).hexdigest()
@@ -44,16 +44,17 @@ def executar_ordem_tapi(valor_brl, preco_atual):
 if st.button("EXECUTAR COMPRA - TAPI v4"):
     st.info("Conectando ao Broker...")
     try:
-        res = executar_ordem_tapi(25.0, 315000.0)
+        # Preço de referência para teste
+        res = executar_ordem_tapi_v4(25.0, 315000.0)
         
         st.write(f"Status Code: {res.status_code}")
         
         if res.status_code == 200:
-            st.success("Sucesso!")
+            st.success("Ordem enviada!")
             st.json(res.json())
         else:
-            st.error(f"Erro (Status {res.status_code})")
-            st.text(res.text[:300])
+            st.error(f"Erro na comunicação (Status {res.status_code})")
+            st.text(res.text[:300]) # Exibe o início do erro
     except Exception as e:
-        st.error(f"Erro no sistema: {e}")
+        st.error(f"Erro crítico: {e}")
         
