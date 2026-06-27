@@ -5,16 +5,17 @@ import hashlib
 import time
 import urllib.parse
 
-st.title("Central de Acúmulo (DCA) - TAPI V4 - Ajuste Final")
+st.title("Central de Acúmulo (DCA) - TAPI V4")
 
+# Certifique-se de que as chaves estão corretas no Secrets do Streamlit Cloud
 API_KEY = st.secrets["MB_API_KEY"]
 API_SECRET = st.secrets["MB_API_SECRET"]
 
 def executar_ordem_tapi_v4(valor_brl, preco_atual):
-    # O endpoint da TAPI v4 é sempre este caminho raiz
+    # O endpoint da TAPI v4 é este caminho raiz
     url = "https://www.mercadobitcoin.net/tapi/v4/"
     
-    # Parâmetros obrigatórios para a função 'place_order'
+    # Parâmetros necessários para a função 'place_order'
     params = {
         "tapi_method": "place_order",
         "tapi_nonce": str(int(time.time() * 1000)),
@@ -42,7 +43,7 @@ def executar_ordem_tapi_v4(valor_brl, preco_atual):
 if st.button("EXECUTAR COMPRA - TAPI V4"):
     st.info("Conectando ao Broker...")
     try:
-        # Preço de teste: 315000.0
+        # Preço de referência fixo para teste
         res = executar_ordem_tapi_v4(25.0, 315000.0)
         
         st.write(f"Status Code: {res.status_code}")
