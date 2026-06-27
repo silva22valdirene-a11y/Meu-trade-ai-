@@ -1,7 +1,22 @@
-# ... (após o sucesso da requisição)
+import streamlit as st
+import requests
+
+# Todo código que não está dentro de uma função ou 'if' deve começar rente à margem esquerda
+st.title("Teste de Conexão")
+
+url = "https://api.mercadobitcoin.net/api/v4/tickers?symbols=BTC-BRL"
+
+try:
+    response = requests.get(url, timeout=5)
+    
+    # O 'if' começa logo após o 'try'
     if response.status_code == 200:
         data = response.json()
-        # Acessa o índice 0 da lista e a chave "last"
-        preco_btc = data[0].get("last")
-        st.success(f"Preço atual do BTC: R$ {preco_btc}")
+        st.write("Dados recebidos com sucesso!")
+        st.write(data)
+    else:
+        st.error(f"Erro na API: {response.status_code}")
         
+except Exception as e:
+    st.error(f"Erro inesperado: {e}")
+    
