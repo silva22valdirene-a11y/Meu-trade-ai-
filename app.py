@@ -1,15 +1,26 @@
 import streamlit as st
 import ccxt
 
-# Em vez de chamar ccxt.mercado_bitcoin diretamente, usamos o método getattr
-# Isso evita o erro de 'NameError' ou 'AttributeError'
-def conectar_corretora(api_key, api_secret):
-    # O nome da classe no CCXT é 'mercadobitcoin' (tudo junto, minúsculo)
-    exchange_class = getattr(ccxt, 'mercadobitcoin')
-    exchange = exchange_class({
-        'apiKey': api_key,
-        'secret': api_secret,
-        'enableRateLimit': True,
-    })
-    return exchange
-    
+st.title("💰 Central de Acúmulo (DCA)")
+
+# Campos de input
+api_key = st.text_input("API Key", type="password")
+api_secret = st.text_input("API Secret", type="password")
+
+if st.button("Verificar Saldo no Mercado Bitcoin"):
+    try:
+        # Conexão direta usando o nome correto da classe no CCXT
+        exchange = ccxt.mercadobitcoin({
+            'apiKey': api_key,
+            'secret': api_secret,
+        })
+        
+        # Tenta buscar o saldo
+        balance = exchange.fetch_balance()
+        brl_disponivel = balance['total'].get('BRL', 0)
+        
+        st.success(f"Conexão OK! Saldo disponível: R$ {brl_disponivel:,.2f}")
+        
+    except Exception as e:
+        st.error(f"Erro ao conectar: {e}")
+        
