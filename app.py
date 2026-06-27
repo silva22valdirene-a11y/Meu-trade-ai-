@@ -1,13 +1,13 @@
-import ccxt
+import requests
 import streamlit as st
 
-# Tente listar as corretoras que ele conhece
-st.write("Lista completa de exchanges:", ccxt.exchanges)
+# Exemplo para pegar o preço atual (Ticker) sem precisar de CCXT
+def get_price():
+    url = "https://api.mercadobitcoin.net/api/v4/tickers?symbols=BTC-BRL"
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = response.json()
+        return data['tickers'][0]['last']
+    return None
 
-# Tente usar o acesso genérico
-try:
-    exchange = ccxt.load_exchange('mercadobitcoin')
-    st.write("Conexão bem-sucedida!")
-except Exception as e:
-    st.write("Erro ao conectar:", e)
-    
+st.write("Preço atual do BTC:", get_price())
